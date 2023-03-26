@@ -1,53 +1,84 @@
 import { Request, Response } from 'express';
-import { User } from '../models/User';
+import { Phrase } from '../models/Phrase';
+import { Sequelize } from 'sequelize';
 
 export const ping = (req: Request, res: Response) => {
     res.json({pong: true});
+};
+
+export const random = async (req: Request, res: Response) => {
+    let nRand: number = Math.floor( Math.random() * 10);
+
+    res.json({number: nRand});
+};
+
+export const name = async (req: Request, res: Response) => {
+    let nome = req.params.nome;
+    res.json({nome: `Você enviou o nome ${nome}`});
 }
 
-export const register = async (req: Request, res: Response) => {
-    if(req.body.email && req.body.password) {
-        let { email, password } = req.body;
+export const createPhrase = async (req: Request, res: Response) => {
+    let {author, txt } = req.body
 
-        let hasUser = await User.findOne({where: { email }});
-        if(!hasUser) {
-            let newUser = await User.create({ email, password });
+    let newPhrase = await Phrase.create({author, txt});
 
-            res.status(201);
-            res.json({ id: newUser.id });
-        } else {
-            res.json({ error: 'E-mail já existe.' });
-        }
+    res.status(201);
+    res.json({ id: newPhrase.id, author, txt } );
+};
+
+export const listPhrases = async (req: Request, res: Response) => {
+    let list = await Phrase.findAll();
+    res.json({ list })
+};
+
+export const findPhrase = async (req: Request, res: Response) => {
+    let {id} = req.params;
+
+    let frase = await Phrase.findByPk(id);
+    if( frase ) {
+        res.json({ frase });
+    } else {
+        res.json({ error: 'Frase não encontrada ou inexistente'})
     }
-
-    res.json({ error: 'E-mail e/ou senha não enviados.' });
 }
 
-export const login = async (req: Request, res: Response) => {
-    if(req.body.email && req.body.password) {
-        let email: string = req.body.email;
-        let password: string = req.body.password;
+export const editPhrase = async (req: Request, res: Response) => {
+    let {id} = req.params;
+    let {author, txt} = req.body;
 
-        let user = await User.findOne({ 
-            where: { email, password }
-        });
+    let frase = await Phrase.findByPk(id);
+    if( frase ) {
+        frase.author = author;
+        frase.txt = txt;
+        await frase.save();
 
-        if(user) {
-            res.json({ status: true });
-            return;
-        }
+        res.json({ frase });
+    } else {
+        res.json({ error: 'Frase não encontrada ou inexistente'})
     }
-
-    res.json({ status: false });
+    
 }
 
-export const list = async (req: Request, res: Response) => {
-    let users = await User.findAll();
-    let list: string[] = [];
-
-    for(let i in users) {
-        list.push( users[i].email );
+export const removePhrase = async (req: Request, res: Response) => {
+    let {id} = req.params;
+    
+    if(id) {
+        await Phrase.destroy({ where: {id}})
+        res.json('frase excluída com sucesso')
+    } else {
+        res.json({ error: 'frase não encontrada'});
     }
+}
 
-    res.json({ list });
+export const randomPhrase = async (req: Request, res: Response) => {
+    let phrase = await Phrase.findOne({
+        order: [
+            Sequelize.fn('Random')
+        ]
+    });
+    if(phrase) {
+        res.json({phrase});
+    } else {
+        res.json({ error: 'Frase não encontrada'})
+    }
 }

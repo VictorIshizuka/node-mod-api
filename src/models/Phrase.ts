@@ -1,26 +1,26 @@
 import { Model, DataTypes } from 'sequelize';
 import { sequelize } from '../instances/pg';
 
-export interface UserInstance extends Model {
+export interface PhraseInstance extends Model {
     id: number;
-    email: string;
-    password: string;
+    author: string;
+    txt: string;
 }
 
-export const User = sequelize.define<UserInstance>('User', {
+export const Phrase = sequelize.define<PhraseInstance>('Phrase', {
     id: {
         primaryKey: true,
         autoIncrement: true,
         type: DataTypes.INTEGER
     },
-    email: {
+    author: {
         type: DataTypes.STRING,
         unique: true
     },
-    password: {
+    txt: {
         type: DataTypes.STRING
     }
 }, {
-    tableName: 'users',
+    tableName: 'phrases',
     timestamps: false
 });
